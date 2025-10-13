@@ -16,4 +16,4 @@ User, Collection (title), Item (title, link, notes)
 Авторизация происходит через запрос логина и пароля пользователя, указанных при регистрации
 
 
-См. также: `SECURITY.md`, `.pre-commit-config.yaml`, `.github/workflows/ci.yml`.
+См.также:`SECURITY.md`, `.pre-commit-config.yaml`, `.github/workflows/ci.yml`.
