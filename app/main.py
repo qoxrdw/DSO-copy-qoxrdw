@@ -20,7 +20,6 @@ class AuthError(ApiError):
     pass
 
 
-# Унифицированный ответ для всех ошибок аутентификации
 UNIFIED_AUTH_ERROR_CONTENT = {
     "error": {"code": "unauthorized", "message": "Invalid credentials"}
 }
@@ -28,26 +27,22 @@ UNIFIED_AUTH_ERROR_CONTENT = {
 
 @app.exception_handler(AuthError)
 async def auth_error_handler(request: Request, exc: AuthError):
-    # Реализация ADR-003: Всегда возвращаем унифицированный контент и статус 401
     return JSONResponse(
         status_code=401,
         content=UNIFIED_AUTH_ERROR_CONTENT,
     )
 
 
-# Защита от Brute-Force (NFR-01) ---
 class RateLimitError(ApiError):
     """Специальный класс для ошибок Rate Limiting (HTTP 429)."""
 
     pass
 
 
-# Параметры Rate Limit
 MAX_ATTEMPTS = 5
 WINDOW_SECONDS = 5 * 60  # 5 минут
 LOCKOUT_SECONDS = 10 * 60  # 10 минут
 
-# MOCK: Хранилище счетчиков (имитация Redis: {login: [count, last_attempt_time, lockout_until]})
 RATE_LIMIT_STORE: Dict[str, Dict[str, Any]] = {}
 
 
@@ -60,7 +55,6 @@ def check_rate_limit(username: str):
         username, {"count": 0, "last_attempt": 0, "lockout_until": 0}
     )
 
-    # Проверка активной блокировки
     if now < user_data["lockout_until"]:
         raise RateLimitError(
             code="rate_limit_exceeded",
@@ -68,21 +62,16 @@ def check_rate_limit(username: str):
             status=status.HTTP_429_TOO_MANY_REQUESTS,
         )
 
-    # Сброс счетчика, если окно времени истекло
     if now - user_data["last_attempt"] > WINDOW_SECONDS:
         user_data["count"] = 0
 
-    # Обновление времени последней попытки
     user_data["last_attempt"] = now
 
-    # Обновление счетчика
     user_data["count"] += 1
 
-    # Проверка лимита и установка блокировки
     if user_data["count"] > MAX_ATTEMPTS:
         user_data["lockout_until"] = now + LOCKOUT_SECONDS
 
-        # Обновление хранилища и выбрасывание ошибки блокировки
         RATE_LIMIT_STORE[username] = user_data
         raise RateLimitError(
             code="rate_limit_lockout",
@@ -93,7 +82,6 @@ def check_rate_limit(username: str):
     RATE_LIMIT_STORE[username] = user_data
 
 
-# Обработчик ошибки Rate Limit
 @app.exception_handler(RateLimitError)
 async def rate_limit_error_handler(request: Request, exc: RateLimitError):
     return JSONResponse(
@@ -110,7 +98,6 @@ async def api_error_handler(request: Request, exc: ApiError):
     )
 
 
-# MOCK: База данных пользователей
 MOCK_USERS = {"user@example.com": "correct_password", "attacker@test.com": "secure_pwd"}
 
 
@@ -119,11 +106,9 @@ def login(username: str, password: str):
     """
     Эндпоинт для имитации аутентификации. Сначала проверяет Rate Limit.
     """
-    # 1. Проверка Rate Limit ПЕРЕД проверкой пароля
     check_rate_limit(username)
 
     if username not in MOCK_USERS:
-        # Внутренняя ошибка 1: Пользователь не найден
         raise AuthError(
             code="user_not_found_internal",
             message="User is not registered",
@@ -131,14 +116,12 @@ def login(username: str, password: str):
         )
 
     if MOCK_USERS[username] != password:
-        # Внутренняя ошибка 2: Неверный пароль
         raise AuthError(
             code="invalid_password_internal",
             message="Password mismatch",
             status=status.HTTP_401_UNAUTHORIZED,
         )
 
-    # Успешный вход
     return {"message": "Login successful"}
 
 
