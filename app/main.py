@@ -3,11 +3,13 @@ from typing import Annotated, Any, Dict
 
 import httpx
 from fastapi import Depends, FastAPI, Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from passlib.context import CryptContext
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.exceptions import HTTPException
 
 from . import models, schemas
 from .auth_utils import create_access_token, get_current_user
@@ -84,6 +86,45 @@ def check_rate_limit(username: str):
         )
 
     RATE_LIMIT_STORE[username] = user_data
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    """
+    Обработчик для стандартных HTTP-ошибок (404 Not Found, 403 Forbidden и т.д.).
+    Это необходимо, чтобы перехватить стандартный 404, который не является ApiError.
+    """
+    if exc.status_code == status.HTTP_404_NOT_FOUND:
+        # Для 404, который не был пойман ApiError, используем код "not_found"
+        error_code = "not_found"
+    elif exc.status_code == status.HTTP_403_FORBIDDEN:
+        error_code = "access_denied"
+    else:
+        # Универсальный код для других HTTP-ошибок
+        error_code = "http_error"
+
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"error": {"code": error_code, "message": exc.detail}},
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """
+    Обработчик для ошибок валидации Pydantic (422 Unprocessable Entity).
+    Он преобразует сложный список ошибок в простой унифицированный формат.
+    """
+    # Мы возвращаем унифицированный код "validation_error", который ожидают тесты
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={
+            "error": {
+                "code": "validation_error",
+                "message": "Invalid data format or missing required fields",
+            }
+        },
+    )
 
 
 @app.exception_handler(RateLimitError)
