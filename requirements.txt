@@ -8,7 +8,7 @@ argon2-cffi==25.1.0
 
 argon2-cffi-bindings==25.1.0
 
-backports.asyncio.runner==1.2.0
+backports.asyncio.runner==1.0.0
 
 blinker==1.9.0
 
