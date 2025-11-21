@@ -1,23 +1,38 @@
 import time
-from typing import Any, Dict
+from typing import Annotated, Any, Dict
 
-from fastapi import FastAPI, Request, status
+import httpx
+from fastapi import Depends, FastAPI, Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from fastapi.security import OAuth2PasswordRequestForm
+from passlib.context import CryptContext
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.exceptions import HTTPException
+
+from . import models, schemas
+from .auth_utils import create_access_token, get_current_user
+from .database import get_db_async, init_db
+from .errors import ApiError, AuthError, RateLimitError
 
 app = FastAPI(title="SecDev Course App", version="0.1.0")
 
 
-class ApiError(Exception):
-    def __init__(self, code: str, message: str, status: int = 400):
-        self.code = code
-        self.message = message
-        self.status = status
+@app.on_event("startup")
+async def startup_event():
+    await init_db()
 
 
-class AuthError(ApiError):
-    """Специальный класс для ошибок аутентификации."""
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
-    pass
+
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
 
 
 UNIFIED_AUTH_ERROR_CONTENT = {
@@ -33,23 +48,14 @@ async def auth_error_handler(request: Request, exc: AuthError):
     )
 
 
-class RateLimitError(ApiError):
-    """Специальный класс для ошибок Rate Limiting (HTTP 429)."""
-
-    pass
-
-
 MAX_ATTEMPTS = 5
-WINDOW_SECONDS = 5 * 60  # 5 минут
-LOCKOUT_SECONDS = 10 * 60  # 10 минут
+WINDOW_SECONDS = 5 * 60
+LOCKOUT_SECONDS = 10 * 60
 
 RATE_LIMIT_STORE: Dict[str, Dict[str, Any]] = {}
 
 
 def check_rate_limit(username: str):
-    """
-    Проверяет и обновляет счетчик попыток входа для данного пользователя.
-    """
     now = time.time()
     user_data = RATE_LIMIT_STORE.get(
         username, {"count": 0, "last_attempt": 0, "lockout_until": 0}
@@ -82,6 +88,45 @@ def check_rate_limit(username: str):
     RATE_LIMIT_STORE[username] = user_data
 
 
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    """
+    Обработчик для стандартных HTTP-ошибок (404 Not Found, 403 Forbidden и т.д.).
+    Это необходимо, чтобы перехватить стандартный 404, который не является ApiError.
+    """
+    if exc.status_code == status.HTTP_404_NOT_FOUND:
+        # Для 404, который не был пойман ApiError, используем код "not_found"
+        error_code = "not_found"
+    elif exc.status_code == status.HTTP_403_FORBIDDEN:
+        error_code = "access_denied"
+    else:
+        # Универсальный код для других HTTP-ошибок
+        error_code = "http_error"
+
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"error": {"code": error_code, "message": exc.detail}},
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """
+    Обработчик для ошибок валидации Pydantic (422 Unprocessable Entity).
+    Он преобразует сложный список ошибок в простой унифицированный формат.
+    """
+    # Мы возвращаем унифицированный код "validation_error", который ожидают тесты
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={
+            "error": {
+                "code": "validation_error",
+                "message": "Invalid data format or missing required fields",
+            }
+        },
+    )
+
+
 @app.exception_handler(RateLimitError)
 async def rate_limit_error_handler(request: Request, exc: RateLimitError):
     return JSONResponse(
@@ -98,56 +143,163 @@ async def api_error_handler(request: Request, exc: ApiError):
     )
 
 
-MOCK_USERS = {"user@example.com": "correct_password", "attacker@test.com": "secure_pwd"}
+async def check_external_link(url: str):
+    if not url:
+        return True
+
+    timeout = httpx.Timeout(5.0)
+
+    try:
+        async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
+            response = await client.head(url)
+            response.raise_for_status()
+            return True
+
+    except httpx.ConnectTimeout:
+        raise ApiError(
+            code="link_timeout",
+            message="External link check timed out",
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    except httpx.HTTPError:
+        raise ApiError(
+            code="link_unreachable",
+            message="External link is unreachable or returned error status",
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    except Exception:
+        raise ApiError(
+            code="link_invalid_format",
+            message="Link format is invalid or check failed",
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+
+@app.post(
+    "/register", response_model=schemas.UserBase, status_code=status.HTTP_201_CREATED
+)
+async def register_user(
+    user: schemas.UserAuth, db: AsyncSession = Depends(get_db_async)
+):
+    stmt = select(models.User).where(models.User.username == user.username)
+    result = await db.execute(stmt)
+    db_user_exists = result.scalar_one_or_none()
+
+    if db_user_exists:
+        raise ApiError(
+            code="user_exists", message="User already exists or bad request", status=400
+        )
+
+    hashed_pwd = get_password_hash(user.password)
+    db_user = models.User(username=user.username, hashed_password=hashed_pwd)
+
+    db.add(db_user)
+    await db.commit()
+    await db.refresh(db_user)
+
+    return db_user
 
 
 @app.post("/login")
-def login(username: str, password: str):
-    """
-    Эндпоинт для имитации аутентификации. Сначала проверяет Rate Limit.
-    """
+async def login(
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    db: AsyncSession = Depends(get_db_async),
+):
+    username = form_data.username
+    password = form_data.password
+
     check_rate_limit(username)
 
-    if username not in MOCK_USERS:
+    stmt = select(models.User).where(models.User.username == username)
+    result = await db.execute(stmt)
+    db_user = result.scalar_one_or_none()
+
+    if not db_user or not verify_password(password, db_user.hashed_password):
         raise AuthError(
-            code="user_not_found_internal",
-            message="User is not registered",
+            code="login_failed_internal",
+            message="Credentials check failed",
             status=status.HTTP_401_UNAUTHORIZED,
         )
 
-    if MOCK_USERS[username] != password:
-        raise AuthError(
-            code="invalid_password_internal",
-            message="Password mismatch",
-            status=status.HTTP_401_UNAUTHORIZED,
+    access_token = create_access_token(data={"sub": db_user.username})
+
+    return {
+        "message": "Login successful",
+        "access_token": access_token,
+        "token_type": "bearer",
+    }
+
+
+@app.get("/collections", response_model=list[schemas.CollectionBase])
+async def list_collections(
+    user: models.User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_async),
+    sort_order: str = "asc",
+):
+    stmt = select(models.Collection).where(models.Collection.user_id == user.id)
+
+    if sort_order == "asc":
+        stmt = stmt.order_by(models.Collection.title.asc())
+    elif sort_order == "desc":
+        stmt = stmt.order_by(models.Collection.title.desc())
+
+    result = await db.execute(stmt)
+    return [collection for collection in result.scalars().all()]
+
+
+@app.post(
+    "/collections",
+    response_model=schemas.CollectionBase,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_collection(
+    collection: schemas.CollectionCreate,
+    user: models.User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_async),
+):
+    db_collection = models.Collection(title=collection.title, user_id=user.id)
+    db.add(db_collection)
+    await db.commit()
+    await db.refresh(db_collection)
+    return db_collection
+
+
+@app.post(
+    "/collections/{collection_id}/items",
+    response_model=schemas.ItemBase,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_item(
+    collection_id: int,
+    item: schemas.ItemCreate,
+    user: models.User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_async),
+):
+    if item.link:
+        await check_external_link(item.link)
+
+    stmt = select(models.Collection).where(
+        models.Collection.id == collection_id, models.Collection.user_id == user.id
+    )
+    result = await db.execute(stmt)
+    collection = result.scalar_one_or_none()
+
+    if not collection:
+        raise ApiError(
+            code="not_found_or_access_denied",
+            message="Collection not found or access denied",
+            status=status.HTTP_404_NOT_FOUND,
         )
 
-    return {"message": "Login successful"}
+    db_item = models.Item(
+        title=item.title, link=item.link, notes=item.notes, collection_id=collection_id
+    )
+    db.add(db_item)
+    await db.commit()
+    await db.refresh(db_item)
+    return db_item
 
 
 @app.get("/health")
 def health():
     return {"status": "ok"}
-
-
-# Example minimal entity (for tests/demo)
-_DB = {"items": []}
-
-
-@app.post("/items")
-def create_item(name: str):
-    if not name or len(name) > 100:
-        raise ApiError(
-            code="validation_error", message="name must be 1..100 chars", status=422
-        )
-    item = {"id": len(_DB["items"]) + 1, "name": name}
-    _DB["items"].append(item)
-    return item
-
-
-@app.get("/items/{item_id}")
-def get_item(item_id: int):
-    for it in _DB["items"]:
-        if it["id"] == item_id:
-            return it
-    raise ApiError(code="not_found", message="item not found", status=404)
