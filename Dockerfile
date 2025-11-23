@@ -4,9 +4,8 @@ FROM python:3.10-slim-bookworm AS builder
 
 RUN apt-get update && \
     apt-get install --no-install-recommends -y \
-    gcc \
-    musl-dev \
-    libpq-dev \
+    gcc=4:12.2.0-3 \
+    libpq-dev=15.14-0+deb12u1 \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /usr/src/app
@@ -18,12 +17,12 @@ RUN pip install --no-cache-dir --compile -r requirements.txt
 FROM python:3.10-alpine3.20
 
 RUN apk add --no-cache \
-    libc6-compat \
-    gcompat \
-    libgcc \
-    libstdc++ \
-    libpq \
-    curl
+    libc6-compat=1.1.0-r4 \
+    gcompat=1.1.0-r4\
+    libgcc=13.2.1_git20240309-r1 \
+    libstdc++=13.2.1_git20240309-r1 \
+    libpq=16.11-r0 \
+    curl=8.14.1-r2
 
 RUN addgroup -S app && adduser -S app -u 1000 -G app
 
