@@ -89,9 +89,7 @@ jobs:
           echo "Image myapp/staging:${{ github.sha }} built successfully."
           echo "Attempting to push to registry (using masked password for login)..."
 
-      # Настроено: Сохранение лога сборки/деплоя как артефакта
       - name: Capture Build/Deploy Log (Artifact)
-        # В реальной жизни здесь сохраняется вывод предыдущих команд в файл
         run: echo "Deployment to staging was successful at $(date +'%Y-%m-%d %H:%M:%S')" > reports/deploy-log.txt
 
       - name: Upload Deployment Log
