@@ -90,7 +90,9 @@ jobs:
           echo "Attempting to push to registry (using masked password for login)..."
 
       - name: Capture Build/Deploy Log (Artifact)
-        run: echo "Deployment to staging was successful at $(date +'%Y-%m-%d %H:%M:%S')" > reports/deploy-log.txt
+        run: |
+          mkdir -p reports
+          echo "Deployment to staging was successful at $(date +'%Y-%m-%d %H:%M:%S')" > reports/deploy-log.txt
 
       - name: Upload Deployment Log
         uses: actions/upload-artifact@v4
