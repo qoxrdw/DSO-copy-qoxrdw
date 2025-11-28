@@ -4,18 +4,18 @@ on:
   push:
     branches: [main]
     paths:
-      - '**.py'
+      - '**/*.py'
+      - 'requirements.txt'
+      - 'requirements-dev.txt'
+      - '.github/workflows/ci-sbom-sca.yml'
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '**/*.py'
       - 'requirements.txt'
       - 'requirements-dev.txt'
       - '.github/workflows/ci-sbom-sca.yml'
   workflow_dispatch:
-  pull_request:
-    types: [opened, synchronize, reopened]
-    paths:
-      - '**.py'
-      - 'requirements.txt'
-      - 'requirements-dev.txt'
-      - '.github/workflows/ci-sbom-sca.yml'
 
 jobs:
   sbom_sca_scan:
@@ -37,7 +37,7 @@ jobs:
         run: mkdir -p EVIDENCE/P09/
 
       - name: Generate SBOM (Syft, CycloneDX format)
-        uses: anchore/sbom-action@v0
+        uses: anchore/sbom-action@v0.17.2
         id: sbom
         with:
           path: .
@@ -45,28 +45,34 @@ jobs:
           format: cyclonedx-json
 
       - name: Run SCA (Grype) and Generate Report
-        uses: anchore/scan-action@v3
+        uses: anchore/scan-action@v4
         id: scan
         with:
           sbom: EVIDENCE/P09/sbom.json
           output-format: json
-          output-file: EVIDENCE/P09/sca_report.json
           fail-build: false
 
+      - name: Save scan results
+        if: always()
+        run: |
+          echo '${{ steps.scan.outputs.json }}' > EVIDENCE/P09/sca_report.json
+
       - name: Generate SCA Summary Markdown
+        if: always()
         run: |
           echo "## SCA Scan Summary" > EVIDENCE/P09/sca_summary.md
           echo "Scan Time: $(date +'%Y-%m-%d %H:%M:%S %Z')" >> EVIDENCE/P09/sca_summary.md
           echo "" >> EVIDENCE/P09/sca_summary.md
           echo "### Vulnerability Count by Severity (from sca_report.json):" >> EVIDENCE/P09/sca_summary.md
           echo "\`\`\`" >> EVIDENCE/P09/sca_summary.md
-          cat EVIDENCE/P09/sca_report.json | jq -r '[.matches[].vulnerability.severity] | group_by(.) | map({severity: .[0], count: length}) | .[] | "\(.severity): \(.count)"' >> EVIDENCE/P09/sca_summary.md
+          cat EVIDENCE/P09/sca_report.json | jq -r '[.matches[].vulnerability.severity] | group_by(.) | map({severity: .[0], count: length}) | .[] | "\(.severity): \(.count)"' >> EVIDENCE/P09/sca_summary.md || echo "No vulnerabilities found" >> EVIDENCE/P09/sca_summary.md
           echo "\`\`\`" >> EVIDENCE/P09/sca_summary.md
           echo "" >> EVIDENCE/P09/sca_summary.md
           echo "[Full JSON Report (sca_report.json) available in Artifacts]" >> EVIDENCE/P09/sca_summary.md
 
       - name: Upload Security Artifacts
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: security-artifacts-P09-${{ github.sha }}
           path: EVIDENCE/P09/
