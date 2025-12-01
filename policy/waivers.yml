@@ -1,0 +1,29 @@
+version: "1.0"
+
+waivers:
+  # Пример 1: Уязвимость в dev-зависимости
+  - id: "XXXXX"
+    package: "example-package"
+    version: "1.2.3"
+    severity: "medium"
+    status: "accepted"
+    reason: "Используется только в dev-окружении, не влияет на production"
+    expiry: "2025-12-31"
+    approved_by: "security-team"
+    approved_date: "2025-12-01"
+    ticket: "JIRA-1234"
+
+
+# Структура waiver:
+# - id: CVE/GHSA идентификатор
+# - package: имя пакета
+# - version: версия или диапазон версий
+# - severity: критичность (critical/high/medium/low)
+# - status: статус (accepted/false_positive/mitigated/risk_accepted)
+# - reason: обоснование решения
+# - mitigation: (опционально) меры по снижению риска
+# - expiry: дата истечения waiver (требуется пересмотр)
+# - approved_by: кто одобрил
+# - approved_date: дата одобрения
+# - ticket: ссылка на тикет в issue tracker
+# - review_required: (опционально) требуется ли периодический пересмотр
