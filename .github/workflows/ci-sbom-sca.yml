@@ -1,4 +1,4 @@
-name: Security SBOM & SCA (Software Composition Analysis)
+name: Security SBOM & SCA
 
 on:
   push:
@@ -8,6 +8,7 @@ on:
       - 'requirements.txt'
       - 'requirements-dev.txt'
       - '.github/workflows/ci-sbom-sca.yml'
+      - 'policy/waivers.yml'
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
@@ -15,6 +16,7 @@ on:
       - 'requirements.txt'
       - 'requirements-dev.txt'
       - '.github/workflows/ci-sbom-sca.yml'
+      - 'policy/waivers.yml'
   workflow_dispatch:
 
 jobs:
@@ -44,6 +46,15 @@ jobs:
           output-file: EVIDENCE/P09/sbom.json
           format: cyclonedx-json
 
+      - name: Verify SBOM was created
+        run: |
+          if [ ! -f "EVIDENCE/P09/sbom.json" ]; then
+            echo "ERROR: SBOM file was not created"
+            exit 1
+          fi
+          echo " SBOM generated successfully"
+          echo "Components found: $(jq '.components | length' EVIDENCE/P09/sbom.json)"
+
       - name: Run SCA (Grype) and Generate Report
         uses: anchore/scan-action@v4
         id: scan
@@ -60,15 +71,66 @@ jobs:
       - name: Generate SCA Summary Markdown
         if: always()
         run: |
-          echo "## SCA Scan Summary" > EVIDENCE/P09/sca_summary.md
-          echo "Scan Time: $(date +'%Y-%m-%d %H:%M:%S %Z')" >> EVIDENCE/P09/sca_summary.md
+          echo "# SCA Scan Summary" > EVIDENCE/P09/sca_summary.md
           echo "" >> EVIDENCE/P09/sca_summary.md
-          echo "### Vulnerability Count by Severity (from sca_report.json):" >> EVIDENCE/P09/sca_summary.md
+          echo "**Scan Time:** $(date +'%Y-%m-%d %H:%M:%S %Z')" >> EVIDENCE/P09/sca_summary.md
+          echo "**Commit:** \`${{ github.sha }}\`" >> EVIDENCE/P09/sca_summary.md
+          echo "**Branch:** \`${{ github.ref_name }}\`" >> EVIDENCE/P09/sca_summary.md
+          echo "" >> EVIDENCE/P09/sca_summary.md
+
+          echo "## Vulnerability Count by Severity" >> EVIDENCE/P09/sca_summary.md
+          echo "" >> EVIDENCE/P09/sca_summary.md
           echo "\`\`\`" >> EVIDENCE/P09/sca_summary.md
-          cat EVIDENCE/P09/sca_report.json | jq -r '[.matches[].vulnerability.severity] | group_by(.) | map({severity: .[0], count: length}) | .[] | "\(.severity): \(.count)"' >> EVIDENCE/P09/sca_summary.md || echo "No vulnerabilities found" >> EVIDENCE/P09/sca_summary.md
+
+          if [ -f "EVIDENCE/P09/sca_report.json" ] && [ -s "EVIDENCE/P09/sca_report.json" ]; then
+            cat EVIDENCE/P09/sca_report.json | jq -r '
+              [.matches[].vulnerability.severity]
+              | group_by(.)
+              | map({severity: .[0], count: length})
+              | .[]
+              | "\(.severity): \(.count)"
+            ' >> EVIDENCE/P09/sca_summary.md || echo "No vulnerabilities found" >> EVIDENCE/P09/sca_summary.md
+          else
+            echo "No vulnerabilities found" >> EVIDENCE/P09/sca_summary.md
+          fi
+
           echo "\`\`\`" >> EVIDENCE/P09/sca_summary.md
           echo "" >> EVIDENCE/P09/sca_summary.md
-          echo "[Full JSON Report (sca_report.json) available in Artifacts]" >> EVIDENCE/P09/sca_summary.md
+
+          echo "## Top Critical/High Vulnerabilities" >> EVIDENCE/P09/sca_summary.md
+          echo "" >> EVIDENCE/P09/sca_summary.md
+
+          if [ -f "EVIDENCE/P09/sca_report.json" ] && [ -s "EVIDENCE/P09/sca_report.json" ]; then
+            cat EVIDENCE/P09/sca_report.json | jq -r '
+              .matches
+              | map(select(.vulnerability.severity == "Critical" or .vulnerability.severity == "High"))
+              | sort_by(.vulnerability.severity)
+              | reverse
+              | .[0:5]
+              | .[]
+              | "- **\(.vulnerability.id)** (\(.vulnerability.severity)) in `\(.artifact.name)@\(.artifact.version)`"
+            ' >> EVIDENCE/P09/sca_summary.md || echo "_No critical/high vulnerabilities found_" >> EVIDENCE/P09/sca_summary.md
+          else
+            echo "_No critical/high vulnerabilities found_" >> EVIDENCE/P09/sca_summary.md
+          fi
+
+          echo "" >> EVIDENCE/P09/sca_summary.md
+          echo "## Artifacts" >> EVIDENCE/P09/sca_summary.md
+          echo "" >> EVIDENCE/P09/sca_summary.md
+          echo "- \`EVIDENCE/P09/sbom.json\` - Full SBOM (CycloneDX format)" >> EVIDENCE/P09/sca_summary.md
+          echo "- \`EVIDENCE/P09/sca_report.json\` - Complete SCA scan report" >> EVIDENCE/P09/sca_summary.md
+          echo "- \`EVIDENCE/P09/sca_summary.md\` - This summary" >> EVIDENCE/P09/sca_summary.md
+          echo "" >> EVIDENCE/P09/sca_summary.md
+          echo "## Next Steps" >> EVIDENCE/P09/sca_summary.md
+          echo "" >> EVIDENCE/P09/sca_summary.md
+          echo "1. Review vulnerabilities in \`sca_report.json\`" >> EVIDENCE/P09/sca_summary.md
+          echo "2. Update affected dependencies where possible" >> EVIDENCE/P09/sca_summary.md
+          echo "3. For accepted risks, add waivers to \`policy/waivers.yml\`" >> EVIDENCE/P09/sca_summary.md
+          echo "4. See \`project/69_sbom-vuln-mgmt.md\` for vulnerability management process" >> EVIDENCE/P09/sca_summary.md
+
+      - name: Display summary in logs
+        if: always()
+        run: cat EVIDENCE/P09/sca_summary.md
 
       - name: Upload Security Artifacts
         uses: actions/upload-artifact@v4
@@ -76,4 +138,4 @@ jobs:
         with:
           name: security-artifacts-P09-${{ github.sha }}
           path: EVIDENCE/P09/
-          retention-days: 7
+          retention-days: 30
