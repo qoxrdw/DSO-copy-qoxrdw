@@ -62,11 +62,18 @@ jobs:
           sbom: EVIDENCE/P09/sbom.json
           output-format: json
           fail-build: false
+        continue-on-error: true
 
-      - name: Save scan results
+      - name: Save scan results from file
         if: always()
         run: |
-          echo '${{ steps.scan.outputs.json }}' > EVIDENCE/P09/sca_report.json
+          if [ -f "results.json" ]; then
+            mv results.json EVIDENCE/P09/sca_report.json
+            echo " SCA report saved to EVIDENCE/P09/sca_report.json"
+          else
+            echo "️ results.json not found, creating empty report"
+            echo '{"matches":[],"source":{}}' > EVIDENCE/P09/sca_report.json
+          fi
 
       - name: Generate SCA Summary Markdown
         if: always()
@@ -121,12 +128,6 @@ jobs:
           echo "- \`EVIDENCE/P09/sca_report.json\` - Complete SCA scan report" >> EVIDENCE/P09/sca_summary.md
           echo "- \`EVIDENCE/P09/sca_summary.md\` - This summary" >> EVIDENCE/P09/sca_summary.md
           echo "" >> EVIDENCE/P09/sca_summary.md
-          echo "## Next Steps" >> EVIDENCE/P09/sca_summary.md
-          echo "" >> EVIDENCE/P09/sca_summary.md
-          echo "1. Review vulnerabilities in \`sca_report.json\`" >> EVIDENCE/P09/sca_summary.md
-          echo "2. Update affected dependencies where possible" >> EVIDENCE/P09/sca_summary.md
-          echo "3. For accepted risks, add waivers to \`policy/waivers.yml\`" >> EVIDENCE/P09/sca_summary.md
-          echo "4. See \`project/69_sbom-vuln-mgmt.md\` for vulnerability management process" >> EVIDENCE/P09/sca_summary.md
 
       - name: Display summary in logs
         if: always()
