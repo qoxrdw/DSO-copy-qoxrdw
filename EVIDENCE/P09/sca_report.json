@@ -1,0 +1,613 @@
+{
+ "matches": [
+  {
+   "vulnerability": {
+    "id": "GHSA-h4gh-qq45-vh27",
+    "dataSource": "https://github.com/advisories/GHSA-h4gh-qq45-vh27",
+    "namespace": "github:language:python",
+    "severity": "Medium",
+    "urls": [
+     "https://github.com/advisories/GHSA-h4gh-qq45-vh27"
+    ],
+    "description": "pyca/cryptography has a vulnerable OpenSSL included in cryptography wheels",
+    "cvss": [],
+    "fix": {
+     "versions": [
+      "43.0.1"
+     ],
+     "state": "fixed"
+    },
+    "advisories": []
+   },
+   "relatedVulnerabilities": [],
+   "matchDetails": [
+    {
+     "type": "exact-direct-match",
+     "matcher": "python-matcher",
+     "searchedBy": {
+      "language": "python",
+      "namespace": "github:language:python",
+      "package": {
+       "name": "cryptography",
+       "version": "42.0.8"
+      }
+     },
+     "found": {
+      "versionConstraint": ">=37.0.0,<43.0.1 (python)",
+      "vulnerabilityID": "GHSA-h4gh-qq45-vh27"
+     }
+    }
+   ],
+   "artifact": {
+    "id": "f476c382d7d9fbe4",
+    "name": "cryptography",
+    "version": "42.0.8",
+    "type": "python",
+    "locations": [
+     {
+      "path": "/requirements.txt"
+     }
+    ],
+    "language": "python",
+    "licenses": [],
+    "cpes": [
+     "cpe:2.3:a:cryptography_project:cryptography:42.0.8:*:*:*:*:python:*:*",
+     "cpe:2.3:a:python-cryptography_project:python-cryptography:42.0.8:*:*:*:*:*:*:*"
+    ],
+    "purl": "pkg:pypi/cryptography@42.0.8",
+    "upstreams": []
+   }
+  },
+  {
+   "vulnerability": {
+    "id": "GHSA-79v4-65xg-pq4g",
+    "dataSource": "https://github.com/advisories/GHSA-79v4-65xg-pq4g",
+    "namespace": "github:language:python",
+    "severity": "Low",
+    "urls": [
+     "https://github.com/advisories/GHSA-79v4-65xg-pq4g"
+    ],
+    "description": "Vulnerable OpenSSL included in cryptography wheels",
+    "cvss": [],
+    "fix": {
+     "versions": [
+      "44.0.1"
+     ],
+     "state": "fixed"
+    },
+    "advisories": []
+   },
+   "relatedVulnerabilities": [
+    {
+     "id": "CVE-2024-12797",
+     "dataSource": "https://nvd.nist.gov/vuln/detail/CVE-2024-12797",
+     "namespace": "nvd:cpe",
+     "severity": "Medium",
+     "urls": [
+      "https://github.com/openssl/openssl/commit/738d4f9fdeaad57660dcba50a619fafced3fd5e9",
+      "https://github.com/openssl/openssl/commit/798779d43494549b611233f92652f0da5328fbe7",
+      "https://github.com/openssl/openssl/commit/87ebd203feffcf92ad5889df92f90bb0ee10a699",
+      "https://openssl-library.org/news/secadv/20250211.txt",
+      "http://www.openwall.com/lists/oss-security/2025/02/11/3",
+      "http://www.openwall.com/lists/oss-security/2025/02/11/4",
+      "https://security.netapp.com/advisory/ntap-20250214-0001/"
+     ],
+     "description": "Issue summary: Clients using RFC7250 Raw Public Keys (RPKs) to authenticate a\nserver may fail to notice that the server was not authenticated, because\nhandshakes don't abort as expected when the SSL_VERIFY_PEER verification mode\nis set.\n\nImpact summary: TLS and DTLS connections using raw public keys may be\nvulnerable to man-in-middle attacks when server authentication failure is not\ndetected by clients.\n\nRPKs are disabled by default in both TLS clients and TLS servers.  The issue\nonly arises when TLS clients explicitly enable RPK use by the server, and the\nserver, likewise, enables sending of an RPK instead of an X.509 certificate\nchain.  The affected clients are those that then rely on the handshake to\nfail when the server's RPK fails to match one of the expected public keys,\nby setting the verification mode to SSL_VERIFY_PEER.\n\nClients that enable server-side raw public keys can still find out that raw\npublic key verification failed by calling SSL_get_verify_result(), and those\nthat do, and take appropriate action, are not affected.  This issue was\nintroduced in the initial implementation of RPK support in OpenSSL 3.2.\n\nThe FIPS modules in 3.4, 3.3, 3.2, 3.1 and 3.0 are not affected by this issue.",
+     "cvss": [
+      {
+       "source": "134c704f-9b21-4f2e-91b3-4a467353bcc0",
+       "type": "Secondary",
+       "version": "3.1",
+       "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:L/A:L",
+       "metrics": {
+        "baseScore": 6.3,
+        "exploitabilityScore": 2.8,
+        "impactScore": 3.4
+       },
+       "vendorMetadata": {}
+      }
+     ]
+    }
+   ],
+   "matchDetails": [
+    {
+     "type": "exact-direct-match",
+     "matcher": "python-matcher",
+     "searchedBy": {
+      "language": "python",
+      "namespace": "github:language:python",
+      "package": {
+       "name": "cryptography",
+       "version": "42.0.8"
+      }
+     },
+     "found": {
+      "versionConstraint": ">=42.0.0,<44.0.1 (python)",
+      "vulnerabilityID": "GHSA-79v4-65xg-pq4g"
+     }
+    }
+   ],
+   "artifact": {
+    "id": "f476c382d7d9fbe4",
+    "name": "cryptography",
+    "version": "42.0.8",
+    "type": "python",
+    "locations": [
+     {
+      "path": "/requirements.txt"
+     }
+    ],
+    "language": "python",
+    "licenses": [],
+    "cpes": [
+     "cpe:2.3:a:cryptography_project:cryptography:42.0.8:*:*:*:*:python:*:*",
+     "cpe:2.3:a:python-cryptography_project:python-cryptography:42.0.8:*:*:*:*:*:*:*"
+    ],
+    "purl": "pkg:pypi/cryptography@42.0.8",
+    "upstreams": []
+   }
+  },
+  {
+   "vulnerability": {
+    "id": "GHSA-wj6h-64fc-37mp",
+    "dataSource": "https://github.com/advisories/GHSA-wj6h-64fc-37mp",
+    "namespace": "github:language:python",
+    "severity": "High",
+    "urls": [
+     "https://github.com/advisories/GHSA-wj6h-64fc-37mp"
+    ],
+    "description": "Minerva timing attack on P-256 in python-ecdsa",
+    "cvss": [
+     {
+      "version": "3.1",
+      "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:N",
+      "metrics": {
+       "baseScore": 7.4,
+       "exploitabilityScore": 2.2,
+       "impactScore": 5.2
+      },
+      "vendorMetadata": {
+       "base_severity": "High",
+       "status": "N/A"
+      }
+     }
+    ],
+    "fix": {
+     "versions": [],
+     "state": "not-fixed"
+    },
+    "advisories": []
+   },
+   "relatedVulnerabilities": [
+    {
+     "id": "CVE-2024-23342",
+     "dataSource": "https://nvd.nist.gov/vuln/detail/CVE-2024-23342",
+     "namespace": "nvd:cpe",
+     "severity": "High",
+     "urls": [
+      "https://github.com/tlsfuzzer/python-ecdsa/blob/master/SECURITY.md",
+      "https://github.com/tlsfuzzer/python-ecdsa/security/advisories/GHSA-wj6h-64fc-37mp",
+      "https://minerva.crocs.fi.muni.cz/",
+      "https://securitypitfalls.wordpress.com/2018/08/03/constant-time-compare-in-python/",
+      "https://github.com/tlsfuzzer/python-ecdsa/blob/master/SECURITY.md",
+      "https://github.com/tlsfuzzer/python-ecdsa/security/advisories/GHSA-wj6h-64fc-37mp",
+      "https://minerva.crocs.fi.muni.cz/",
+      "https://securitypitfalls.wordpress.com/2018/08/03/constant-time-compare-in-python/"
+     ],
+     "description": "The `ecdsa` PyPI package is a pure Python implementation of ECC (Elliptic Curve Cryptography) with support for ECDSA (Elliptic Curve Digital Signature Algorithm), EdDSA (Edwards-curve Digital Signature Algorithm) and ECDH (Elliptic Curve Diffie-Hellman). Versions 0.18.0 and prior are vulnerable to the Minerva attack. As of time of publication, no known patched version exists.",
+     "cvss": [
+      {
+       "source": "security-advisories@github.com",
+       "type": "Secondary",
+       "version": "3.1",
+       "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:N",
+       "metrics": {
+        "baseScore": 7.4,
+        "exploitabilityScore": 2.2,
+        "impactScore": 5.2
+       },
+       "vendorMetadata": {}
+      },
+      {
+       "source": "nvd@nist.gov",
+       "type": "Primary",
+       "version": "3.1",
+       "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:N",
+       "metrics": {
+        "baseScore": 7.4,
+        "exploitabilityScore": 2.2,
+        "impactScore": 5.2
+       },
+       "vendorMetadata": {}
+      }
+     ]
+    }
+   ],
+   "matchDetails": [
+    {
+     "type": "exact-direct-match",
+     "matcher": "python-matcher",
+     "searchedBy": {
+      "language": "python",
+      "namespace": "github:language:python",
+      "package": {
+       "name": "ecdsa",
+       "version": "0.19.1"
+      }
+     },
+     "found": {
+      "versionConstraint": ">=0 (python)",
+      "vulnerabilityID": "GHSA-wj6h-64fc-37mp"
+     }
+    }
+   ],
+   "artifact": {
+    "id": "4e260217f42072d6",
+    "name": "ecdsa",
+    "version": "0.19.1",
+    "type": "python",
+    "locations": [
+     {
+      "path": "/requirements.txt"
+     }
+    ],
+    "language": "python",
+    "licenses": [],
+    "cpes": [
+     "cpe:2.3:a:tlsfuzzer:ecdsa:0.19.1:*:*:*:*:python:*:*"
+    ],
+    "purl": "pkg:pypi/ecdsa@0.19.1",
+    "upstreams": []
+   }
+  },
+  {
+   "vulnerability": {
+    "id": "GHSA-f96h-pmfr-66vw",
+    "dataSource": "https://github.com/advisories/GHSA-f96h-pmfr-66vw",
+    "namespace": "github:language:python",
+    "severity": "High",
+    "urls": [
+     "https://github.com/advisories/GHSA-f96h-pmfr-66vw"
+    ],
+    "description": "Starlette Denial of service (DoS) via multipart/form-data",
+    "cvss": [
+     {
+      "version": "3.1",
+      "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:N",
+      "metrics": {
+       "baseScore": 0,
+       "exploitabilityScore": 3.9,
+       "impactScore": 0
+      },
+      "vendorMetadata": {
+       "base_severity": "None",
+       "status": "N/A"
+      }
+     }
+    ],
+    "fix": {
+     "versions": [
+      "0.40.0"
+     ],
+     "state": "fixed"
+    },
+    "advisories": []
+   },
+   "relatedVulnerabilities": [
+    {
+     "id": "CVE-2024-47874",
+     "dataSource": "https://nvd.nist.gov/vuln/detail/CVE-2024-47874",
+     "namespace": "nvd:cpe",
+     "severity": "High",
+     "urls": [
+      "https://github.com/encode/starlette/commit/fd038f3070c302bff17ef7d173dbb0b007617733",
+      "https://github.com/encode/starlette/security/advisories/GHSA-f96h-pmfr-66vw"
+     ],
+     "description": "Starlette is an Asynchronous Server Gateway Interface (ASGI) framework/toolkit. Prior to version 0.40.0, Starlette treats `multipart/form-data` parts without a `filename` as text form fields and buffers those in byte strings with no size limit. This allows an attacker to upload arbitrary large form fields and cause Starlette to both slow down significantly due to excessive memory allocations and copy operations, and also consume more and more memory until the server starts swapping and grinds to a halt, or the OS terminates the server process with an OOM error. Uploading multiple such requests in parallel may be enough to render a service practically unusable, even if reasonable request size limits are enforced by a reverse proxy in front of Starlette. This Denial of service (DoS) vulnerability affects all applications built with Starlette (or FastAPI) accepting form requests. Verison 0.40.0 fixes this issue.",
+     "cvss": [
+      {
+       "source": "security-advisories@github.com",
+       "type": "Secondary",
+       "version": "4.0",
+       "vector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N/E:X/CR:X/IR:X/AR:X/MAV:X/MAC:X/MAT:X/MPR:X/MUI:X/MVC:X/MVI:X/MVA:X/MSC:X/MSI:X/MSA:X/S:X/AU:X/R:X/V:X/RE:X/U:X",
+       "metrics": {
+        "baseScore": 8.7
+       },
+       "vendorMetadata": {}
+      }
+     ]
+    }
+   ],
+   "matchDetails": [
+    {
+     "type": "exact-direct-match",
+     "matcher": "python-matcher",
+     "searchedBy": {
+      "language": "python",
+      "namespace": "github:language:python",
+      "package": {
+       "name": "starlette",
+       "version": "0.38.6"
+      }
+     },
+     "found": {
+      "versionConstraint": "<0.40.0 (python)",
+      "vulnerabilityID": "GHSA-f96h-pmfr-66vw"
+     }
+    }
+   ],
+   "artifact": {
+    "id": "6597096e11ad4ab4",
+    "name": "starlette",
+    "version": "0.38.6",
+    "type": "python",
+    "locations": [
+     {
+      "path": "/requirements.txt"
+     }
+    ],
+    "language": "python",
+    "licenses": [],
+    "cpes": [
+     "cpe:2.3:a:encode:starlette:0.38.6:*:*:*:*:python:*:*"
+    ],
+    "purl": "pkg:pypi/starlette@0.38.6",
+    "upstreams": []
+   }
+  },
+  {
+   "vulnerability": {
+    "id": "GHSA-2c2j-9gv5-cj73",
+    "dataSource": "https://github.com/advisories/GHSA-2c2j-9gv5-cj73",
+    "namespace": "github:language:python",
+    "severity": "Medium",
+    "urls": [
+     "https://github.com/advisories/GHSA-2c2j-9gv5-cj73"
+    ],
+    "description": "Starlette has possible denial-of-service vector when parsing large files in multipart forms",
+    "cvss": [
+     {
+      "version": "3.1",
+      "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L",
+      "metrics": {
+       "baseScore": 5.3,
+       "exploitabilityScore": 3.9,
+       "impactScore": 1.4
+      },
+      "vendorMetadata": {
+       "base_severity": "Medium",
+       "status": "N/A"
+      }
+     }
+    ],
+    "fix": {
+     "versions": [
+      "0.47.2"
+     ],
+     "state": "fixed"
+    },
+    "advisories": []
+   },
+   "relatedVulnerabilities": [
+    {
+     "id": "CVE-2025-54121",
+     "dataSource": "https://nvd.nist.gov/vuln/detail/CVE-2025-54121",
+     "namespace": "nvd:cpe",
+     "severity": "Medium",
+     "urls": [
+      "https://github.com/encode/starlette/blob/fa5355442753f794965ae1af0f87f9fec1b9a3de/starlette/datastructures.py#L436C5-L447C14",
+      "https://github.com/encode/starlette/commit/9f7ec2eb512fcc3fe90b43cb9dd9e1d08696bec1",
+      "https://github.com/encode/starlette/discussions/2927#discussioncomment-13721403",
+      "https://github.com/encode/starlette/security/advisories/GHSA-2c2j-9gv5-cj73"
+     ],
+     "description": "Starlette is a lightweight ASGI (Asynchronous Server Gateway Interface) framework/toolkit, designed for building async web services in Python. In versions 0.47.1 and below, when parsing a multi-part form with large files (greater than the default max spool size) starlette will block the main thread to roll the file over to disk. This blocks the event thread which means the application can't accept new connections. The UploadFile code has a minor bug where instead of just checking for self._in_memory, the logic should also check if the additional bytes will cause a rollover. The vulnerability is fixed in version 0.47.2.",
+     "cvss": [
+      {
+       "source": "security-advisories@github.com",
+       "type": "Secondary",
+       "version": "3.1",
+       "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L",
+       "metrics": {
+        "baseScore": 5.3,
+        "exploitabilityScore": 3.9,
+        "impactScore": 1.4
+       },
+       "vendorMetadata": {}
+      }
+     ]
+    }
+   ],
+   "matchDetails": [
+    {
+     "type": "exact-direct-match",
+     "matcher": "python-matcher",
+     "searchedBy": {
+      "language": "python",
+      "namespace": "github:language:python",
+      "package": {
+       "name": "starlette",
+       "version": "0.38.6"
+      }
+     },
+     "found": {
+      "versionConstraint": "<0.47.2 (python)",
+      "vulnerabilityID": "GHSA-2c2j-9gv5-cj73"
+     }
+    }
+   ],
+   "artifact": {
+    "id": "6597096e11ad4ab4",
+    "name": "starlette",
+    "version": "0.38.6",
+    "type": "python",
+    "locations": [
+     {
+      "path": "/requirements.txt"
+     }
+    ],
+    "language": "python",
+    "licenses": [],
+    "cpes": [
+     "cpe:2.3:a:encode:starlette:0.38.6:*:*:*:*:python:*:*"
+    ],
+    "purl": "pkg:pypi/starlette@0.38.6",
+    "upstreams": []
+   }
+  }
+ ],
+ "source": {
+  "type": "file",
+  "target": "."
+ },
+ "distro": {
+  "name": "",
+  "version": "",
+  "idLike": null
+ },
+ "descriptor": {
+  "name": "grype",
+  "version": "0.80.0",
+  "configuration": {
+   "output": [
+    "json"
+   ],
+   "file": "",
+   "distro": "",
+   "add-cpes-if-none": false,
+   "output-template-file": "",
+   "check-for-app-update": false,
+   "only-fixed": false,
+   "only-notfixed": false,
+   "ignore-wontfix": "",
+   "platform": "",
+   "search": {
+    "scope": "squashed",
+    "unindexed-archives": false,
+    "indexed-archives": true
+   },
+   "ignore": [
+    {
+     "vulnerability": "",
+     "reason": "",
+     "namespace": "",
+     "fix-state": "",
+     "package": {
+      "name": "kernel-headers",
+      "version": "",
+      "language": "",
+      "type": "rpm",
+      "location": "",
+      "upstream-name": "kernel"
+     },
+     "vex-status": "",
+     "vex-justification": "",
+     "match-type": "exact-indirect-match"
+    },
+    {
+     "vulnerability": "",
+     "reason": "",
+     "namespace": "",
+     "fix-state": "",
+     "package": {
+      "name": "linux-headers-.*",
+      "version": "",
+      "language": "",
+      "type": "deb",
+      "location": "",
+      "upstream-name": "linux"
+     },
+     "vex-status": "",
+     "vex-justification": "",
+     "match-type": "exact-indirect-match"
+    },
+    {
+     "vulnerability": "",
+     "reason": "",
+     "namespace": "",
+     "fix-state": "",
+     "package": {
+      "name": "linux-libc-dev",
+      "version": "",
+      "language": "",
+      "type": "deb",
+      "location": "",
+      "upstream-name": "linux"
+     },
+     "vex-status": "",
+     "vex-justification": "",
+     "match-type": "exact-indirect-match"
+    }
+   ],
+   "exclude": [],
+   "db": {
+    "cache-dir": "/home/runner/.cache/grype/db",
+    "update-url": "https://toolbox-data.anchore.io/grype/databases/listing.json",
+    "ca-cert": "",
+    "auto-update": true,
+    "validate-by-hash-on-start": false,
+    "validate-age": true,
+    "max-allowed-built-age": 432000000000000,
+    "require-update-check": false,
+    "update-available-timeout": 30000000000,
+    "update-download-timeout": 300000000000
+   },
+   "externalSources": {
+    "enable": false,
+    "maven": {
+     "searchUpstreamBySha1": true,
+     "baseUrl": "https://search.maven.org/solrsearch/select"
+    }
+   },
+   "match": {
+    "java": {
+     "using-cpes": false
+    },
+    "dotnet": {
+     "using-cpes": false
+    },
+    "golang": {
+     "using-cpes": false,
+     "always-use-cpe-for-stdlib": true,
+     "allow-main-module-pseudo-version-comparison": false
+    },
+    "javascript": {
+     "using-cpes": false
+    },
+    "python": {
+     "using-cpes": false
+    },
+    "ruby": {
+     "using-cpes": false
+    },
+    "rust": {
+     "using-cpes": false
+    },
+    "stock": {
+     "using-cpes": true
+    }
+   },
+   "fail-on-severity": "medium",
+   "registry": {
+    "insecure-skip-tls-verify": false,
+    "insecure-use-http": false,
+    "auth": null,
+    "ca-cert": ""
+   },
+   "show-suppressed": false,
+   "by-cve": false,
+   "name": "",
+   "default-image-pull-source": "",
+   "vex-documents": [],
+   "vex-add": [],
+   "match-upstream-kernel-headers": false
+  },
+  "db": {
+   "built": "2025-11-27T00:25:44Z",
+   "schemaVersion": 5,
+   "location": "/home/runner/.cache/grype/db/5",
+   "checksum": "sha256:d58af86de29a31494167963bd87d5c8b6ebed0834c52530006fb73cdba25b5c2",
+   "error": null
+  },
+  "timestamp": "2025-12-01T16:11:28.230213825Z"
+ }
+}
